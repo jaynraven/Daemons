@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "*.in": "cpp"
+        "*.in": "cpp",
+        "atomic": "cpp",
+        "memory": "cpp"
     }
 }

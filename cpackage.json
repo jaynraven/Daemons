@@ -11,7 +11,15 @@
                 "url":"null"
             }
         ],
-        "windows":[],
+        "windows":[
+            {
+                "name":"LogSDK",
+                "version":"null",
+                "tag":"null",
+                "access":"PUBLIC",
+                "url":"null"
+            }
+        ],
         "linux":[],
         "darwin":[]
     }

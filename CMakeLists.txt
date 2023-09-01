@@ -7,10 +7,10 @@ cmake_minimum_required(VERSION 3.20)
 add_definitions(-DUNICODE -D_UNICODE)
 
 # 工程定义
-project(cmake_template
+project(daemons
     VERSION 1.0.0
     LANGUAGES C CXX
-    DESCRIPTION "cmake template project"
+    DESCRIPTION "daemons"
 )
 
 # 必须在工程定义之后包含project模块
@@ -58,23 +58,23 @@ endif()
 
 message(STATUS "Build target, mode: ${BUILD_MODE}, platform: ${TARGET_PLATFORM}, arch: ${TARGET_ARCH}, build type: ${BUILD_TYPE}")
 
-if(WIN32)
-    set(TARGET_NAME lib_CMakeTemplateSDK)
-elseif(APPLE)
-    set(TARGET_NAME CMakeTemplateSDK)
-elseif(UNIX)
-    set(TARGET_NAME CMakeTemplateSDK)
-else()
-    set(TARGET_NAME CMakeTemplateSDK)
-endif()
+# if(WIN32)
+#     set(TARGET_NAME lib_CMakeTemplateSDK)
+# elseif(APPLE)
+#     set(TARGET_NAME CMakeTemplateSDK)
+# elseif(UNIX)
+#     set(TARGET_NAME CMakeTemplateSDK)
+# else()
+#     set(TARGET_NAME CMakeTemplateSDK)
+# endif()
 
 # 设置全局目录变量
 set(BIN_DIR ${PROJECT_SOURCE_DIR}/bin)
 set(CODE_DIR ${PROJECT_SOURCE_DIR}/code)
-set(SRC_DIR ${CODE_DIR}/src)
-set(INTERFACE_DIR ${CODE_DIR}/interface)
+# set(SRC_DIR ${CODE_DIR}/src)
+# set(INTERFACE_DIR ${CODE_DIR}/interface)
 set(VERSION_DIR ${CODE_DIR}/version)
-set(APP_DIR ${CODE_DIR}/app)
+# set(APP_DIR ${CODE_DIR}/app)
 set(EXAMPLE_DIR ${PROJECT_SOURCE_DIR}/example)
 set(3TH_DIR ${PROJECT_SOURCE_DIR}/3th)
 set(BIN_OUTPUT_DIR ${BIN_DIR}/${INSTALL_ARCH})
@@ -142,48 +142,49 @@ if(WIN32)
 endif()
 
 # 设置源代码
-file(GLOB_RECURSE interface_code_files ${INTERFACE_DIR}/*.*)
-file(GLOB_RECURSE src_code_files ${SRC_DIR}/*.*)
+# file(GLOB_RECURSE interface_code_files ${INTERFACE_DIR}/*.*)
+# file(GLOB_RECURSE src_code_files ${SRC_DIR}/*.*)
 
 # 对源码进行分组
-source_group(interface FILES ${interface_code_files})
+# source_group(interface FILES ${interface_code_files})
 source_group(src FILES ${src_code_files})
 source_group(version FILES ${VERSION_RC_FILE})
 
 # 添加库目标
-add_library(${TARGET_NAME} SHARED)
-target_sources(${TARGET_NAME}
-    PRIVATE
-    ${interface_code_files}
-    ${src_code_files}
-    ${VERSION_RC_FILE}
-)
-target_include_directories(${TARGET_NAME}
-    PRIVATE
-    ${CODE_DIR}
-    ${INTERFACE_DIR}
-    ${SRC_DIR}
-)
+# add_library(${TARGET_NAME} SHARED)
+# target_sources(${TARGET_NAME}
+#     PRIVATE
+#     ${interface_code_files}
+#     ${src_code_files}
+#     ${VERSION_RC_FILE}
+# )
+# target_include_directories(${TARGET_NAME}
+#     PRIVATE
+#     ${CODE_DIR}
+#     ${INTERFACE_DIR}
+#     ${SRC_DIR}
+# )
 
-target_compile_definitions(${TARGET_NAME} PRIVATE DLL_EXPORT PUBLIC "$<$<CONFIG:DEBUG>:_DEBUG>")
-target_compile_definitions(${TARGET_NAME} PUBLIC cxx_std_17)
+# target_compile_definitions(${TARGET_NAME} PRIVATE DLL_EXPORT PUBLIC "$<$<CONFIG:DEBUG>:_DEBUG>")
+# target_compile_definitions(${TARGET_NAME} PUBLIC cxx_std_17)
 
-if(WIN32)
-    set_target_properties(${TARGET_NAME} PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-endif(WIN32)
+# if(WIN32)
+#     set_target_properties(${TARGET_NAME} PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+# endif(WIN32)
 
 # ---------------------------------------------------------------------------- #
 # Target link 3th library 链接第三方库
 # ---------------------------------------------------------------------------- #
 
-target_add_third_party_from_config(${TARGET_NAME} ${CPACKAGE_FILE} ${3TH_DIR} ${TARGET_PLATFORM} ${INSTALL_BIN_NAME})
+# target_add_third_party_from_config(${TARGET_NAME} ${CPACKAGE_FILE} ${3TH_DIR} ${TARGET_PLATFORM} ${INSTALL_BIN_NAME})
 
 # ---------------------------------------------------------------------------- #
 # Project add runnable target 添加可执行目标
 # ---------------------------------------------------------------------------- #
 
 # 添加可执行应用
-add_subdirectory(${APP_DIR}/cmake_template_app)
+add_subdirectory(${CODE_DIR}/daemons)
+add_subdirectory(${CODE_DIR}/daemons-mgr)
 
 # 添加示例应用
 add_subdirectory(${EXAMPLE_DIR})
@@ -192,19 +193,19 @@ add_subdirectory(${EXAMPLE_DIR})
 # Install 设置安装路径
 # ---------------------------------------------------------------------------- #
 
-install(TARGETS ${TARGET_NAME} 
-    RUNTIME DESTINATION ${INSTALL_BIN_NAME} 
-    LIBRARY DESTINATION ${INSTALL_BIN_NAME}
-    ARCHIVE DESTINATION ${INSTALL_LIBRARY_NAME}
-)
-install(DIRECTORY ${INTERFACE_DIR}/ DESTINATION ${INSTALL_INCLUDE_NAME})
+# install(TARGETS ${TARGET_NAME} 
+#     RUNTIME DESTINATION ${INSTALL_BIN_NAME} 
+#     LIBRARY DESTINATION ${INSTALL_BIN_NAME}
+#     ARCHIVE DESTINATION ${INSTALL_LIBRARY_NAME}
+# )
+# install(DIRECTORY ${INTERFACE_DIR}/ DESTINATION ${INSTALL_INCLUDE_NAME})
 install(DIRECTORY ${PUBLIC_DOC_DIR}/ DESTINATION ${INSTALL_DOC_NAME})
 install(DIRECTORY ${CONFIG_DIR}/ DESTINATION ${INSTALL_CONFIG_NAME})
 
 # 设置git版本install路径
 install(FILES ${CMAKE_BINARY_DIR}/git_version DESTINATION .)
 # 设置符号文件install路径
-if(WIN32)
-    set(PDB_FILES ${BIN_OUTPUT_DIR}/${CMAKE_BUILD_TYPE}/${TARGET_NAME}.pdb)
-    install(FILES ${PDB_FILES} DESTINATION ${INSTALL_BIN_NAME})
-endif()
+# if(WIN32)
+#     set(PDB_FILES ${BIN_OUTPUT_DIR}/${CMAKE_BUILD_TYPE}/${TARGET_NAME}.pdb)
+#     install(FILES ${PDB_FILES} DESTINATION ${INSTALL_BIN_NAME})
+# endif()
