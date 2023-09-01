@@ -1,0 +1,18 @@
+{
+    "name":"jsoncpp",
+    "version":"null",
+    "dependencies":{
+        "common":[
+            {
+                "name":"jsoncpp",
+                "version":"null",
+                "tag":"null",
+                "access":"PUBLIC",
+                "url":"null"
+            }
+        ],
+        "windows":[],
+        "linux":[],
+        "darwin":[]
+    }
+}
