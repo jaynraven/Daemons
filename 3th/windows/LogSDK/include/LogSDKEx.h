@@ -26,4 +26,7 @@
 #define LOG_WARN(format, ...)   Log(LOG_CATALOG, LEVEL_WARN, format, __VA_ARGS__)
 #define LOG_DEBUG(format, ...)  Log(LOG_CATALOG, LEVEL_DEBUG, format, __VA_ARGS__)
 
+#define LOG_INFO_FUNC_BEGIN     LOG_INFO("%s begin", __FUNCTION__)
+#define LOG_INFO_FUNC_END       LOG_INFO("%s end", __FUNCTION__)
+
 #endif

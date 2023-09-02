@@ -1,21 +1,27 @@
-#include <windows.h>
 #include <stdio.h>
 #include <atomic>
 #include "LogSDKEx.h"
+#include "server.hpp"
+#include <windows.h>
+
+#pragma comment (lib, "ws2_32.lib")  //加载 ws2_32.dll
 
 SERVICE_STATUS        g_ServiceStatus = {0};
 SERVICE_STATUS_HANDLE g_StatusHandle = NULL;
-std::atomic<bool>     g_ServiceStop = false;
 
 VOID WINAPI ServiceMain (DWORD argc, LPTSTR *argv);
 VOID WINAPI ServiceCtrlHandler (DWORD);
-DWORD WINAPI ServiceWorkerThread (LPVOID lpParam);
 
 #define SERVICE_NAME  L"Daemons Service"
 
 int main (int argc, char **argv)
 {
     LOG_INIT;
+
+    // test
+    if (Server::Instance()->InitServer())
+        Server::Instance()->Listen();
+    // test end
 
     SERVICE_TABLE_ENTRY ServiceTable[] = 
     {
@@ -70,11 +76,8 @@ VOID WINAPI ServiceMain (DWORD argc, LPTSTR *argv)
         OutputDebugString(L"My Sample Service: ServiceMain: SetServiceStatus returned error");
     }
 
-    // Start the thread that will perform the main task of the service
-    HANDLE hThread = CreateThread (NULL, 0, ServiceWorkerThread, NULL, 0, NULL);
-
-    // Wait until our worker thread exits effectively signaling that the service needs to stop
-    WaitForSingleObject (hThread, INFINITE);
+    if (Server::Instance()->InitServer())
+        Server::Instance()->Listen();
    
     /*
      * Perform any cleanup tasks
@@ -121,7 +124,7 @@ VOID WINAPI ServiceCtrlHandler (DWORD CtrlCode)
         }
 
         // This will signal the worker thread to start shutting down
-        g_ServiceStop = true;
+        Server::Instance()->CloseServer();
      }
 
         break;
@@ -129,23 +132,4 @@ VOID WINAPI ServiceCtrlHandler (DWORD CtrlCode)
      default:
          break;
     }
-}
-
-DWORD WINAPI ServiceWorkerThread (LPVOID lpParam)
-{
-    LOG_INFO("start");
-    //  Periodically check if the service has been requested to stop
-    while (g_ServiceStop == false)
-    {        
-        /* 
-         * Perform main service function here
-         */
-
-        LOG_INFO("doing...");
-         
-        Sleep(3000);  // Simulate some lengthy operations.
-    }
-
-    LOG_INFO("stop");
-    return ERROR_SUCCESS;
 }
