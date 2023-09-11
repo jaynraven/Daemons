@@ -3,9 +3,10 @@
 #include "socket.hpp"
 #include <thread>
 #include <functional>
+#include "util.hpp"
 
 AcceptClient::AcceptClient(SOCKET socket) : 
-    socket_(socket)
+    socket_(socket), stop_(false)
 {
 }
 
@@ -77,8 +78,11 @@ void AcceptClient::ReceiveMessageThread()
         queue_.push(sock_data);
     }
 
-    if (th_queue_process.joinable())
+    if (th_queue_process.joinable()) 
+    {
+        stop_ = true;
         th_queue_process.join();
+    }
     
     if (socket_)
         closesocket(socket_);    // V（资源占用完毕）
@@ -88,5 +92,85 @@ void AcceptClient::ReceiveMessageThread()
 
 void AcceptClient::ProcessDataQueueThread() 
 {
-    // todo
+    LOG_INFO_FUNC_BEGIN;
+
+    std::vector<std::thread> ths;
+    while (true)
+    {
+        while (!queue_.empty())
+        {
+            std::shared_ptr<SockData> sock_data = queue_.try_pop();
+            if (sock_data) 
+            {
+                // process socket data
+                switch (sock_data->data_type)
+                {
+                case DT_CrashMonitor:
+                {
+                    CrashMonitorInfo info;
+                    if (info.FromJson(sock_data->data_body))
+                    {
+                        ths.push_back(std::thread(std::bind(&AcceptClient::MonitorProcessCrashThread, this, info)));
+                    }
+                }
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+        for (size_t i = 0; i < 100; i++)
+        {
+            if (stop_) break;
+            Sleep(10);
+        }
+    }
+
+    for (size_t i = 0; i < ths.size(); i++)
+    {
+        if (ths[i].joinable())
+            ths[i].join();
+    }
+
+    LOG_INFO_FUNC_END;
+}
+
+void AcceptClient::MonitorProcessCrashThread(CrashMonitorInfo info)
+{
+    LOG_INFO_FUNC_BEGIN;
+
+    DWORD processId = 1234;  // 替换为你要监测的进程ID
+
+    HANDLE processHandle = OpenProcess(SYNCHRONIZE, FALSE, processId);
+    if (processHandle == NULL)
+    {
+        LOG_ERROR("OpenProcess %ld failed with error %ld", info.process_id, GetLastError());
+        return;
+    }
+
+    while (true)
+    {
+        DWORD exitCode;
+        if (GetExitCodeProcess(processHandle, &exitCode) == FALSE)
+        {
+            LOG_ERROR("GetExitCodeProcess %ld failed with error %ld", info.process_id, GetLastError());
+            break;
+        }
+
+        if (exitCode != STILL_ACTIVE)
+        {
+            LOG_INFO("Process %ld crash with %ld", info.process_id, exitCode);
+            if (info.restart)
+            {
+                ExcuteProcess(info.restart_exe_path);
+            }
+            break;
+        }
+
+        Sleep(1000);  // 间隔1秒钟轮询一次
+    }
+
+    CloseHandle(processHandle);
+
+    LOG_INFO_FUNC_END;
 }

@@ -88,7 +88,7 @@ void Server::Listen()
 
         LOG_INFO("accept: %d", sockConn);
         AcceptClient* acpt_client = new AcceptClient(sockConn);
-        std::thread recv_thread = std::thread(std::bind(&AcceptClient::ReceiveMessageThread, acpt_client));
+        recv_thread_group.push_back(std::thread(std::bind(&AcceptClient::ReceiveMessageThread, acpt_client)));
     }
 
     for (size_t i = 0; i < recv_thread_group.size(); i++)
