@@ -18,8 +18,12 @@ public:
     ~AcceptClient();
 
     void ReceiveMessageThread();
+
+private:
     void ProcessDataQueueThread();
     void MonitorProcessCrashThread(CrashMonitorInfo info);
+    void FeedbackMsg(FeedbackInfo info);
+    void FeedbackMsg(char data_type, unsigned int ret, std::string msg);
 };
 
 #endif

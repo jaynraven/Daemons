@@ -4,6 +4,7 @@
 #include <thread>
 #include <functional>
 #include "util.hpp"
+#include "error_defines.hpp"
 
 AcceptClient::AcceptClient(SOCKET socket) : 
     socket_(socket), stop_(false)
@@ -108,9 +109,10 @@ void AcceptClient::ProcessDataQueueThread()
                 case DT_CrashMonitor:
                 {
                     CrashMonitorInfo info;
-                    if (info.FromJson(sock_data->data_body))
+                    if (info.FromJsonStr(sock_data->data_body))
                     {
                         ths.push_back(std::thread(std::bind(&AcceptClient::MonitorProcessCrashThread, this, info)));
+                        FeedbackMsg(DT_CrashMonitor, ERROR_NO, "start monitor process crash succeed!");
                     }
                 }
                     break;
@@ -172,5 +174,33 @@ void AcceptClient::MonitorProcessCrashThread(CrashMonitorInfo info)
 
     CloseHandle(processHandle);
 
+    LOG_INFO_FUNC_END;
+}
+
+void AcceptClient::FeedbackMsg(FeedbackInfo info)
+{
+    FeedbackMsg(info.data_type, info.ret, info.msg);
+}
+
+void AcceptClient::FeedbackMsg(char data_type, unsigned int ret, std::string msg)
+{
+    LOG_INFO_FUNC_BEGIN;
+
+    FeedbackInfo info;
+    info.data_type = data_type;
+    info.ret = ret;
+    info.msg = msg;
+
+    SockData sock_data;
+    sock_data.data_type = DT_Feedback;
+    sock_data.SetData(info.ToJsonStr().c_str(), info.ToJsonStr().size());
+    auto data = sock_data.GetData();
+    auto ret = send(socket_, data, sock_data.GetDataLen(), NULL);
+    if (ret <= 0) 
+    {
+        LOG_ERROR("send failed with error %ld", WSAGetLastError());
+    }
+    delete data;
+    
     LOG_INFO_FUNC_END;
 }
