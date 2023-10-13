@@ -9,6 +9,7 @@
 #include <condition_variable>
 #include <functional>
 #include <future>
+#include "Windows.h"
 
 class ThreadPool {
 public:
@@ -60,6 +61,11 @@ public:
         completionCondition.wait(lock, [this] { return numTasks == 0; });
     }
 
+    bool empty() {
+        std::unique_lock<std::mutex> lock(countMutex);
+        return numTasks == 0;
+    }
+
     ~ThreadPool() {
         {
             std::unique_lock<std::mutex> lock(queueMutex);
@@ -81,28 +87,40 @@ private:
     size_t numTasks;
 };
 
-// int main() {
-//     ThreadPool pool(4);
+int main() {
+    ThreadPool pool(4);
 
-//     // 使用Lambda表达式演示任务的返回结果
-//     std::vector<std::future<int>> results;
-//     for (int i = 0; i < 8; ++i) {
-//         results.emplace_back(pool.enqueue([i] {
-//             std::cout << "Task " << i << " executed in thread " << std::this_thread::get_id() << std::endl;
-//             std::this_thread::sleep_for(std::chrono::seconds(1));
-//             return i * i;
-//         }));
-//     }
+    // 使用Lambda表达式演示任务的返回结果
+    std::vector<std::future<int>> results;
+    for (int i = 0; i < 8; ++i) {
+        std::future<int> result_future = pool.enqueue([i] {
+            std::cout << "Task " << i << " executed in thread " << std::this_thread::get_id() << std::endl;
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            return i * i;
+        });
+        results.emplace_back(result_future);
+    }
 
-//     // 等待所有任务执行完毕
-//     pool.wait();
+    // 获取每个任务的结果并输出
+    while (!pool.empty() || results.empty())
+    {
+        for (auto it = results.begin(); it != results.end();)
+        {
+            std::future_status status = it->wait_for(std::chrono::seconds(0));
+            if (status == std::future_status::ready) {
+                int taskResult = it->get();
+                std::cout << taskResult << std::endl;
+                it = results.erase(it);
+            }
+            else {
+                it++;
+            }
+        }
 
-//     // 获取任务的返回结果
-//     for (auto& result : results) {
-//         std::cout << "Task result: " << result.get() << std::endl;
-//     }
+        Sleep(1000);
+    }
 
-//     return 0;
-// }
+    return 0;
+}
 
 #endif
